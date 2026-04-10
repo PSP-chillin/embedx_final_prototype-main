@@ -41,6 +41,7 @@
 #include <Wire.h>
 #include <RTClib.h>
 #include <time.h>
+#include <math.h>
 #include <ESP32Servo.h>
 
 // ============== PIN CONFIGURATION ==============
@@ -429,6 +430,12 @@ void read_sensors()
 
   unsigned long currentTime = millis();
   unsigned long elapsedTime = currentTime - oldTime;
+
+  // Guard against zero/invalid elapsed time to avoid inf/nan flow rates.
+  if (elapsedTime == 0)
+  {
+    elapsedTime = 1;
+  }
 
   // Calculate flow rates using accurate timing (L/min)
   // Formula: flowRate = ((1000.0 / elapsedTime) * pulseCount) / calibration
@@ -1039,12 +1046,17 @@ void send_data_to_supabase()
           now.hour(), now.minute(), now.second());
 
   // Build JSON object with exact field names (only fields that exist in water_readings table)
+  float safe_flow_1 = isfinite(system_state.current_flow_rate_1) ? system_state.current_flow_rate_1 : 0.0;
+  float safe_flow_2 = isfinite(system_state.current_flow_rate_2) ? system_state.current_flow_rate_2 : 0.0;
+  float safe_loss = isfinite(system_state.percentage_loss) ? system_state.percentage_loss : 0.0;
+  float safe_level = isfinite(system_state.water_level_cm) ? system_state.water_level_cm : 0.0;
+
   doc["timestamp"] = timestamp;
-  doc["flow_rate_1"] = round(system_state.current_flow_rate_1 * 100.0) / 100.0;
-  doc["flow_rate_2"] = round(system_state.current_flow_rate_2 * 100.0) / 100.0;
+  doc["flow_rate_1"] = round(safe_flow_1 * 100.0) / 100.0;
+  doc["flow_rate_2"] = round(safe_flow_2 * 100.0) / 100.0;
   // percentage_loss is already 0-100, just send directly (don't multiply by 100 again)
-  doc["percentage_loss"] = system_state.percentage_loss;
-  doc["water_level"] = round(system_state.water_level_cm * 100.0) / 100.0;
+  doc["percentage_loss"] = safe_loss;
+  doc["water_level"] = round(safe_level * 100.0) / 100.0;
   doc["valve_state"] = system_state.valve_state;
   doc["leak_status"] = system_state.leak_status;
   doc["anomaly_status"] = system_state.anomaly_status;

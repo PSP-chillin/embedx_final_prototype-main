@@ -1,8 +1,8 @@
 // ============== CONFIGURATION ==============
-// ADD YOUR SUPABASE CREDENTIALS HERE
+// Netlify injects values into window.__ENV__ at deploy time.
 const SUPABASE_CONFIG = {
-    url: '*******************', // Replace with your Supabase URL
-    key: '***************************************************************************' // Replace with your Supabase Anon Key
+    url: window.__ENV__?.SUPABASE_URL || localStorage.getItem('supabaseUrl') || '',
+    key: window.__ENV__?.SUPABASE_KEY || localStorage.getItem('supabaseKey') || ''
 };
 
 const CONFIG = {

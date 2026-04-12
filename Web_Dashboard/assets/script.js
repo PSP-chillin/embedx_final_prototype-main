@@ -993,34 +993,28 @@ function updateHumidityDisplay(latestReading) {
     const humidity = hasHumidity ? Math.max(0, Math.min(100, Number(humidityRaw))) : null;
 
     const humidityValue = document.getElementById('humidityValue');
-    const humidityTank = document.querySelector('.humidity-tank');
-    const humidityTankLiquid = document.getElementById('humidityTankLiquid');
-    const humidityTankLabel = document.getElementById('humidityTankLabel');
-    const humidityStopTop = document.getElementById('humidityStopTop');
-    const humidityStopMidTop = document.getElementById('humidityStopMidTop');
-    const humidityStopMidBottom = document.getElementById('humidityStopMidBottom');
-    const humidityStopBottom = document.getElementById('humidityStopBottom');
+    const humidityAura = document.getElementById('humidityAura');
+    const humidityAuraLabel = document.getElementById('humidityAuraLabel');
+    const humidityOrbitProgress = document.getElementById('humidityOrbitProgress');
     const humidityComfortBadge = document.getElementById('humidityComfortBadge');
     const humidityTrend = document.getElementById('humidityTrend');
 
-    const applyHumidityTankState = (state) => {
-        const palettes = {
-            dry: ['#fde68a', '#fbbf24', '#d97706', '#92400e'],
-            good: ['#bbf7d0', '#4ade80', '#22c55e', '#166534'],
-            wet: ['#bfdbfe', '#60a5fa', '#2563eb', '#1e3a8a'],
-            muted: ['#cbd5e1', '#94a3b8', '#64748b', '#475569']
-        };
-        const palette = palettes[state] || palettes.muted;
+    const ringLength = 339.29;
 
-        if (humidityTank) {
-            humidityTank.classList.remove('humidity-state-dry', 'humidity-state-good', 'humidity-state-wet', 'humidity-state-muted');
-            humidityTank.classList.add(`humidity-state-${state}`);
+    const applyHumidityAuraState = (state) => {
+        if (humidityAura) {
+            humidityAura.classList.remove('humidity-state-dry', 'humidity-state-good', 'humidity-state-wet', 'humidity-state-muted');
+            humidityAura.classList.remove('breathing-calm', 'breathing-alert');
+            humidityAura.classList.add(`humidity-state-${state}`);
+
+            if (state === 'good') {
+                humidityAura.classList.add('breathing-calm');
+            } else if (state === 'dry' || state === 'wet') {
+                humidityAura.classList.add('breathing-alert');
+            } else {
+                humidityAura.classList.add('breathing-calm');
+            }
         }
-
-        if (humidityStopTop) humidityStopTop.setAttribute('stop-color', palette[0]);
-        if (humidityStopMidTop) humidityStopMidTop.setAttribute('stop-color', palette[1]);
-        if (humidityStopMidBottom) humidityStopMidBottom.setAttribute('stop-color', palette[2]);
-        if (humidityStopBottom) humidityStopBottom.setAttribute('stop-color', palette[3]);
     };
 
     if (!humidityValue || !humidityComfortBadge || !humidityTrend) {
@@ -1028,14 +1022,13 @@ function updateHumidityDisplay(latestReading) {
     }
 
     if (humidity === null) {
-        applyHumidityTankState('muted');
+        applyHumidityAuraState('muted');
         humidityValue.textContent = 'N/A';
-        if (humidityTankLiquid) {
-            humidityTankLiquid.style.top = 'calc(100% - 0%)';
+        if (humidityAuraLabel) {
+            humidityAuraLabel.textContent = 'NO DATA';
         }
-        if (humidityTankLabel) {
-            humidityTankLabel.textContent = 'N/A';
-            humidityTankLabel.style.bottom = '0%';
+        if (humidityOrbitProgress) {
+            humidityOrbitProgress.style.strokeDashoffset = String(ringLength);
         }
         humidityComfortBadge.textContent = 'NO DATA';
         humidityComfortBadge.className = 'humidity-comfort humidity-comfort-muted';
@@ -1044,12 +1037,18 @@ function updateHumidityDisplay(latestReading) {
     }
 
     humidityValue.textContent = `${humidity.toFixed(1)}%`;
-    if (humidityTankLiquid) {
-        humidityTankLiquid.style.top = `calc(100% - ${humidity}%)`;
+    if (humidityAuraLabel) {
+        if (humidity < 30) {
+            humidityAuraLabel.textContent = 'DRY';
+        } else if (humidity > 70) {
+            humidityAuraLabel.textContent = 'HUMID';
+        } else {
+            humidityAuraLabel.textContent = 'COMFORT';
+        }
     }
-    if (humidityTankLabel) {
-        humidityTankLabel.textContent = `${humidity.toFixed(0)}%`;
-        humidityTankLabel.style.bottom = `${humidity}%`;
+    if (humidityOrbitProgress) {
+        const offset = ringLength * (1 - humidity / 100);
+        humidityOrbitProgress.style.strokeDashoffset = offset.toFixed(2);
     }
 
     let comfortText = 'COMFORT';
@@ -1066,7 +1065,7 @@ function updateHumidityDisplay(latestReading) {
         humidityState = 'wet';
     }
 
-    applyHumidityTankState(humidityState);
+    applyHumidityAuraState(humidityState);
 
     humidityComfortBadge.textContent = comfortText;
     humidityComfortBadge.className = `humidity-comfort ${comfortClass}`;

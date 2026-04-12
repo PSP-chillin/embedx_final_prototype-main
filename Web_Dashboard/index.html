@@ -302,28 +302,21 @@
                 <section class="card humidity-section">
                     <h2>🌫️ Ambient Humidity</h2>
                     <div class="humidity-content">
-                        <div class="humidity-tank humidity-state-muted" aria-label="Humidity level visual">
-                            <div class="liquid" id="humidityTankLiquid">
-                                <svg class="water" viewBox="0 0 200 100">
-                                    <defs>
-                                        <linearGradient id="humidityGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop id="humidityStopTop" offset="0" stop-color="#6ee7f2"/>
-                                            <stop id="humidityStopMidTop" offset="0.35" stop-color="#22d3ee"/>
-                                            <stop id="humidityStopMidBottom" offset="0.7" stop-color="#06b6d4"/>
-                                            <stop id="humidityStopBottom" offset="1" stop-color="#0c4a6e"/>
-                                        </linearGradient>
-                                    </defs>
-                                    <path fill="url(#humidityGradient)" d="M 0,0 v 100 h 200 v -100 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5"/>
-                                </svg>
+                        <div class="humidity-aura humidity-state-muted" id="humidityAura" aria-label="Ambient humidity aura">
+                            <svg class="humidity-orbit" viewBox="0 0 140 140" aria-hidden="true">
+                                <circle class="orbit-track" cx="70" cy="70" r="54"></circle>
+                                <circle class="orbit-progress" id="humidityOrbitProgress" cx="70" cy="70" r="54"></circle>
+                            </svg>
+                            <div class="humidity-core">
+                                <span class="humidity-value" id="humidityValue">0.0%</span>
+                                <span class="humidity-mini-label" id="humidityAuraLabel">NO DATA</span>
                             </div>
-                            <div class="indicator" data-value="75"></div>
-                            <div class="indicator" data-value="50"></div>
-                            <div class="indicator" data-value="25"></div>
-                            <div class="label" id="humidityTankLabel">0%</div>
+                            <span class="humidity-spark humidity-spark-1" aria-hidden="true"></span>
+                            <span class="humidity-spark humidity-spark-2" aria-hidden="true"></span>
+                            <span class="humidity-spark humidity-spark-3" aria-hidden="true"></span>
                         </div>
                         <div class="humidity-info">
                             <div class="humidity-main">
-                                <span class="humidity-value" id="humidityValue">0.0%</span>
                                 <span class="humidity-trend" id="humidityTrend">Waiting for sensor data...</span>
                             </div>
                             <div class="tank-stat">

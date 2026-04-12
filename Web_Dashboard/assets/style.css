@@ -828,91 +828,146 @@ body {
     align-items: center;
 }
 
-.humidity-tank {
-    width: 10em;
-    height: 14.5em;
-    border: 0.26em solid #29414d;
-    border-top: none;
-    border-radius: 0 0 12px 12px;
+.humidity-aura {
+    --humidity-accent: #7c8c96;
+    --humidity-glow: rgba(100, 116, 129, 0.35);
+    --humidity-core-bg: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.82), rgba(187, 203, 212, 0.72));
+    width: 12.5rem;
+    height: 12.5rem;
+    border-radius: 50%;
     position: relative;
-    overflow: hidden;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    animation: humidityAuraPulse 4.8s ease-in-out infinite;
 }
 
-.humidity-tank .liquid svg stop {
-    transition: stop-color 0.35s ease;
+.humidity-aura.breathing-calm {
+    animation-duration: 5.8s;
 }
 
-.humidity-tank .liquid {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    overflow: hidden;
-    top: calc(100% - 0%);
+.humidity-aura.breathing-alert {
+    animation-duration: 2.8s;
 }
 
-.humidity-tank .liquid svg {
-    height: 15em;
-    top: calc(97.5% - 57%);
-    position: absolute;
-    animation: waves 5s linear infinite;
-}
-
-.humidity-tank .label {
-    position: absolute;
-    right: -4.7em;
-    bottom: 0;
-    width: 3.8em;
-    text-align: center;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #fff;
-    background: #243843;
-    border-radius: 8px;
-    line-height: 1.9;
-}
-
-.humidity-tank .label::before {
+.humidity-aura::before {
     content: '';
     position: absolute;
-    width: 0.65em;
-    height: 0.65em;
-    left: -0.28em;
-    top: 0.54em;
-    transform: rotate(45deg);
-    background: #243843;
+    inset: 0.65rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+    opacity: 0.75;
+    pointer-events: none;
 }
 
-.humidity-tank.humidity-state-dry .label,
-.humidity-tank.humidity-state-dry .label::before {
-    background: #8a5a12;
-}
-
-.humidity-tank.humidity-state-good .label,
-.humidity-tank.humidity-state-good .label::before {
-    background: #106f39;
-}
-
-.humidity-tank.humidity-state-wet .label,
-.humidity-tank.humidity-state-wet .label::before {
-    background: #0d5c8d;
-}
-
-.humidity-tank.humidity-state-muted .label,
-.humidity-tank.humidity-state-muted .label::before {
-    background: #55646d;
-}
-
-.humidity-tank .indicator {
+.humidity-orbit {
     position: absolute;
-    right: 0;
-    width: 0.95em;
-    height: 0.22em;
-    background: #29414d;
+    inset: 0;
+    transform: rotate(-90deg);
 }
 
-.humidity-tank .indicator[data-value='25'] { bottom: 25%; }
-.humidity-tank .indicator[data-value='50'] { bottom: 50%; }
-.humidity-tank .indicator[data-value='75'] { bottom: 75%; }
+.orbit-track,
+.orbit-progress {
+    fill: none;
+    stroke-width: 11;
+}
+
+.orbit-track {
+    stroke: rgba(16, 34, 46, 0.14);
+}
+
+.orbit-progress {
+    stroke: var(--humidity-accent);
+    stroke-linecap: round;
+    stroke-dasharray: 339.29;
+    stroke-dashoffset: 339.29;
+    filter: drop-shadow(0 0 8px var(--humidity-glow));
+    transition: stroke-dashoffset 0.6s ease, stroke 0.35s ease;
+}
+
+.humidity-core {
+    width: 8.2rem;
+    height: 8.2rem;
+    border-radius: 50%;
+    background: var(--humidity-core-bg);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 8px 16px rgba(255, 255, 255, 0.32), 0 10px 22px rgba(16, 34, 46, 0.16);
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 0.2rem;
+    z-index: 1;
+    animation: humidityCorePulse 4.8s ease-in-out infinite;
+}
+
+.humidity-mini-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #385563;
+}
+
+.humidity-spark {
+    position: absolute;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--humidity-accent);
+    box-shadow: 0 0 14px var(--humidity-glow);
+    opacity: 0.7;
+}
+
+.humidity-spark-1 { top: 1.3rem; right: 1.9rem; animation: humiditySparkFloat 3s ease-in-out infinite; }
+.humidity-spark-2 { bottom: 1.55rem; right: 1.2rem; animation: humiditySparkFloat 4s ease-in-out infinite 0.35s; }
+.humidity-spark-3 { top: 3.1rem; left: 1.2rem; animation: humiditySparkFloat 3.6s ease-in-out infinite 0.7s; }
+
+@keyframes humiditySparkFloat {
+    0%, 100% { transform: translateY(0); opacity: 0.55; }
+    50% { transform: translateY(-8px); opacity: 0.92; }
+}
+
+@keyframes humidityAuraPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
+    50% { transform: scale(1.015); filter: drop-shadow(0 0 12px var(--humidity-glow)); }
+}
+
+@keyframes humidityCorePulse {
+    0%, 100% { transform: scale(1); box-shadow: inset 0 8px 16px rgba(255, 255, 255, 0.32), 0 10px 22px rgba(16, 34, 46, 0.16); }
+    50% { transform: scale(1.03); box-shadow: inset 0 8px 16px rgba(255, 255, 255, 0.36), 0 14px 28px rgba(16, 34, 46, 0.2); }
+}
+
+.humidity-aura.breathing-calm .humidity-core {
+    animation-duration: 5.8s;
+}
+
+.humidity-aura.breathing-alert .humidity-core {
+    animation-duration: 2.8s;
+}
+
+.humidity-aura.humidity-state-dry {
+    --humidity-accent: #e39a2f;
+    --humidity-glow: rgba(227, 154, 47, 0.45);
+    --humidity-core-bg: radial-gradient(circle at 35% 35%, rgba(255, 246, 218, 0.9), rgba(249, 215, 136, 0.62));
+}
+
+.humidity-aura.humidity-state-good {
+    --humidity-accent: #1fb36a;
+    --humidity-glow: rgba(31, 179, 106, 0.45);
+    --humidity-core-bg: radial-gradient(circle at 35% 35%, rgba(226, 253, 238, 0.9), rgba(161, 232, 194, 0.62));
+}
+
+.humidity-aura.humidity-state-wet {
+    --humidity-accent: #2f8fe0;
+    --humidity-glow: rgba(47, 143, 224, 0.45);
+    --humidity-core-bg: radial-gradient(circle at 35% 35%, rgba(229, 244, 255, 0.9), rgba(154, 203, 244, 0.62));
+}
+
+.humidity-aura.humidity-state-muted {
+    --humidity-accent: #7c8c96;
+    --humidity-glow: rgba(124, 140, 150, 0.38);
+    --humidity-core-bg: radial-gradient(circle at 35% 35%, rgba(239, 245, 248, 0.9), rgba(186, 201, 209, 0.62));
+}
 
 .humidity-info {
     display: grid;
@@ -930,7 +985,7 @@ body {
 
 .humidity-value {
     font-family: 'Chakra Petch', sans-serif;
-    font-size: 2rem;
+    font-size: 1.85rem;
     color: #09697d;
 }
 

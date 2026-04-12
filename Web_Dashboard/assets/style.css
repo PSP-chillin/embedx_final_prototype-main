@@ -393,8 +393,7 @@ body {
 .water-tank .indicator[data-value='75'] { bottom: 75%; }
 
 .tank-info,
-.stats-content,
-.humidity-content {
+.stats-content {
     display: grid;
     gap: 0.55rem;
 }
@@ -657,11 +656,111 @@ body {
     color: #fff;
 }
 
+.humidity-content {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.humidity-tank {
+    width: 10em;
+    height: 14.5em;
+    border: 0.26em solid #29414d;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.humidity-tank .liquid svg stop {
+    transition: stop-color 0.35s ease;
+}
+
+.humidity-tank .liquid {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
+    top: calc(100% - 0%);
+}
+
+.humidity-tank .liquid svg {
+    height: 15em;
+    top: calc(97.5% - 57%);
+    position: absolute;
+    animation: waves 5s linear infinite;
+}
+
+.humidity-tank .label {
+    position: absolute;
+    right: -4.7em;
+    bottom: 0;
+    width: 3.8em;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    background: #243843;
+    border-radius: 8px;
+    line-height: 1.9;
+}
+
+.humidity-tank .label::before {
+    content: '';
+    position: absolute;
+    width: 0.65em;
+    height: 0.65em;
+    left: -0.28em;
+    top: 0.54em;
+    transform: rotate(45deg);
+    background: #243843;
+}
+
+.humidity-tank.humidity-state-dry .label,
+.humidity-tank.humidity-state-dry .label::before {
+    background: #8a5a12;
+}
+
+.humidity-tank.humidity-state-good .label,
+.humidity-tank.humidity-state-good .label::before {
+    background: #106f39;
+}
+
+.humidity-tank.humidity-state-wet .label,
+.humidity-tank.humidity-state-wet .label::before {
+    background: #0d5c8d;
+}
+
+.humidity-tank.humidity-state-muted .label,
+.humidity-tank.humidity-state-muted .label::before {
+    background: #55646d;
+}
+
+.humidity-tank .indicator {
+    position: absolute;
+    right: 0;
+    width: 0.95em;
+    height: 0.22em;
+    background: #29414d;
+}
+
+.humidity-tank .indicator[data-value='25'] { bottom: 25%; }
+.humidity-tank .indicator[data-value='50'] { bottom: 50%; }
+.humidity-tank .indicator[data-value='75'] { bottom: 75%; }
+
+.humidity-info {
+    display: grid;
+    gap: 0.55rem;
+}
+
 .humidity-main {
     background: linear-gradient(145deg, rgba(11, 106, 125, 0.11), rgba(22, 164, 190, 0.09));
     border: 1px solid rgba(11, 106, 125, 0.2);
     border-radius: var(--radius-sm);
     padding: 0.7rem;
+    display: grid;
+    gap: 0.3rem;
 }
 
 .humidity-value {
@@ -675,20 +774,11 @@ body {
     color: var(--muted);
 }
 
-.humidity-meter {
-    height: 14px;
-    border-radius: 999px;
-    overflow: hidden;
-    border: 1px solid rgba(16, 34, 46, 0.16);
-    background: rgba(16, 34, 46, 0.1);
-}
-
-.humidity-meter-fill {
-    height: 100%;
-    width: 0;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #f3a135, #11a57d 45%, #0998d9);
-    transition: width 0.5s ease;
+.humidity-trend-card {
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.8rem;
+    background: rgba(11, 106, 125, 0.08);
+    border: 1px solid rgba(11, 106, 125, 0.14);
 }
 
 .humidity-comfort {
@@ -1219,6 +1309,12 @@ body.dark-mode .stat-value {
     }
 
     .tank-container {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+    }
+
+    .humidity-content {
         grid-template-columns: 1fr;
         justify-items: center;
         text-align: center;

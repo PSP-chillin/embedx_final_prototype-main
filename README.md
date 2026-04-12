@@ -1,10 +1,10 @@
-# Water Leak Detection System - Complete Documentation
+# FlowState - Complete Documentation
 
-A professional-grade real-time smart water monitoring and leak detection system for smart buildings using ESP32, Supabase, and a responsive web dashboard.
+FlowState is a professional-grade real-time smart water monitoring and leak detection system for the city using ESP32, Supabase, and a responsive web dashboard.
 
 ---
 
-## CHECKOUT- [varunax.netlify.app](https://varunax.netlify.app) (for demo)
+## CHECKOUT- [FlowState.netlify.app](https://sustainflow.netlify.app/) (for demo)
 
 ## 📋 Table of Contents
 

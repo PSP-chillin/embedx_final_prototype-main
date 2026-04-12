@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Leak Detection Dashboard</title>
+    <title>FlowState</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
             <div class="header-content">
                 <div class="header-title-wrap">
                     <p class="eyebrow">Smart Utilities Control Center</p>
-                    <h1>Water Intelligence Dashboard</h1>
+                    <h1>FlowState</h1>
                     <p class="header-subtitle">Live flow, leak risk, humidity comfort, and infrastructure health in one place.</p>
                 </div>
                 <div class="header-status">
@@ -231,14 +231,38 @@
                 <section class="card humidity-section">
                     <h2>🌫️ Ambient Humidity</h2>
                     <div class="humidity-content">
-                        <div class="humidity-main">
-                            <span class="humidity-value" id="humidityValue">0.0%</span>
-                            <span class="humidity-trend" id="humidityTrend">Waiting for sensor data...</span>
+                        <div class="humidity-tank humidity-state-muted" aria-label="Humidity level visual">
+                            <div class="liquid" id="humidityTankLiquid">
+                                <svg class="water" viewBox="0 0 200 100">
+                                    <defs>
+                                        <linearGradient id="humidityGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop id="humidityStopTop" offset="0" stop-color="#6ee7f2"/>
+                                            <stop id="humidityStopMidTop" offset="0.35" stop-color="#22d3ee"/>
+                                            <stop id="humidityStopMidBottom" offset="0.7" stop-color="#06b6d4"/>
+                                            <stop id="humidityStopBottom" offset="1" stop-color="#0c4a6e"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path fill="url(#humidityGradient)" d="M 0,0 v 100 h 200 v -100 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5 c -10,0 -15,5 -25,5 c -10,0 -15,-5 -25,-5"/>
+                                </svg>
+                            </div>
+                            <div class="indicator" data-value="75"></div>
+                            <div class="indicator" data-value="50"></div>
+                            <div class="indicator" data-value="25"></div>
+                            <div class="label" id="humidityTankLabel">0%</div>
                         </div>
-                        <div class="humidity-meter">
-                            <div class="humidity-meter-fill" id="humidityMeterFill" style="width: 0%"></div>
+                        <div class="humidity-info">
+                            <div class="humidity-main">
+                                <span class="humidity-value" id="humidityValue">0.0%</span>
+                                <span class="humidity-trend" id="humidityTrend">Waiting for sensor data...</span>
+                            </div>
+                            <div class="tank-stat">
+                                <span class="label">Comfort Band:</span>
+                                <span class="value">30% - 70%</span>
+                            </div>
+                            <div class="humidity-trend-card">
+                                <div class="humidity-comfort humidity-comfort-muted" id="humidityComfortBadge">NO DATA</div>
+                            </div>
                         </div>
-                        <div class="humidity-comfort" id="humidityComfortBadge">NO DATA</div>
                     </div>
                 </section>
 
@@ -383,7 +407,7 @@
     </div>
 
     <footer class="footer">
-        <p>&copy; 2026 Smart Water Monitoring System | Real-time Leak Detection & Analytics</p>
+        <p>&copy; 2026 FlowState | Real-time Leak Detection & Analytics</p>
     </footer>
 
     <div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>

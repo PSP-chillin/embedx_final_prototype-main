@@ -795,17 +795,50 @@ function updateHumidityDisplay(latestReading) {
     const humidity = hasHumidity ? Math.max(0, Math.min(100, Number(humidityRaw))) : null;
 
     const humidityValue = document.getElementById('humidityValue');
-    const humidityMeterFill = document.getElementById('humidityMeterFill');
+    const humidityTank = document.querySelector('.humidity-tank');
+    const humidityTankLiquid = document.getElementById('humidityTankLiquid');
+    const humidityTankLabel = document.getElementById('humidityTankLabel');
+    const humidityStopTop = document.getElementById('humidityStopTop');
+    const humidityStopMidTop = document.getElementById('humidityStopMidTop');
+    const humidityStopMidBottom = document.getElementById('humidityStopMidBottom');
+    const humidityStopBottom = document.getElementById('humidityStopBottom');
     const humidityComfortBadge = document.getElementById('humidityComfortBadge');
     const humidityTrend = document.getElementById('humidityTrend');
 
-    if (!humidityValue || !humidityMeterFill || !humidityComfortBadge || !humidityTrend) {
+    const applyHumidityTankState = (state) => {
+        const palettes = {
+            dry: ['#fde68a', '#fbbf24', '#d97706', '#92400e'],
+            good: ['#bbf7d0', '#4ade80', '#22c55e', '#166534'],
+            wet: ['#bfdbfe', '#60a5fa', '#2563eb', '#1e3a8a'],
+            muted: ['#cbd5e1', '#94a3b8', '#64748b', '#475569']
+        };
+        const palette = palettes[state] || palettes.muted;
+
+        if (humidityTank) {
+            humidityTank.classList.remove('humidity-state-dry', 'humidity-state-good', 'humidity-state-wet', 'humidity-state-muted');
+            humidityTank.classList.add(`humidity-state-${state}`);
+        }
+
+        if (humidityStopTop) humidityStopTop.setAttribute('stop-color', palette[0]);
+        if (humidityStopMidTop) humidityStopMidTop.setAttribute('stop-color', palette[1]);
+        if (humidityStopMidBottom) humidityStopMidBottom.setAttribute('stop-color', palette[2]);
+        if (humidityStopBottom) humidityStopBottom.setAttribute('stop-color', palette[3]);
+    };
+
+    if (!humidityValue || !humidityComfortBadge || !humidityTrend) {
         return;
     }
 
     if (humidity === null) {
+        applyHumidityTankState('muted');
         humidityValue.textContent = 'N/A';
-        humidityMeterFill.style.width = '0%';
+        if (humidityTankLiquid) {
+            humidityTankLiquid.style.top = 'calc(100% - 0%)';
+        }
+        if (humidityTankLabel) {
+            humidityTankLabel.textContent = 'N/A';
+            humidityTankLabel.style.bottom = '0%';
+        }
         humidityComfortBadge.textContent = 'NO DATA';
         humidityComfortBadge.className = 'humidity-comfort humidity-comfort-muted';
         humidityTrend.textContent = 'Humidity column missing in latest row.';
@@ -813,18 +846,29 @@ function updateHumidityDisplay(latestReading) {
     }
 
     humidityValue.textContent = `${humidity.toFixed(1)}%`;
-    humidityMeterFill.style.width = `${humidity}%`;
+    if (humidityTankLiquid) {
+        humidityTankLiquid.style.top = `calc(100% - ${humidity}%)`;
+    }
+    if (humidityTankLabel) {
+        humidityTankLabel.textContent = `${humidity.toFixed(0)}%`;
+        humidityTankLabel.style.bottom = `${humidity}%`;
+    }
 
     let comfortText = 'COMFORT';
     let comfortClass = 'humidity-comfort-good';
+    let humidityState = 'good';
 
     if (humidity < 30) {
         comfortText = 'DRY AIR';
         comfortClass = 'humidity-comfort-dry';
+        humidityState = 'dry';
     } else if (humidity > 70) {
         comfortText = 'VERY HUMID';
         comfortClass = 'humidity-comfort-wet';
+        humidityState = 'wet';
     }
+
+    applyHumidityTankState(humidityState);
 
     humidityComfortBadge.textContent = comfortText;
     humidityComfortBadge.className = `humidity-comfort ${comfortClass}`;

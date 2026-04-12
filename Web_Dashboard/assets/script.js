@@ -1,8 +1,9 @@
 // ============== CONFIGURATION ==============
 // Netlify injects values into window.__ENV__ at deploy time.
 const SUPABASE_CONFIG = {
-    url: window.__ENV__?.SUPABASE_URL || localStorage.getItem('supabaseUrl') || '',
-    key: window.__ENV__?.SUPABASE_KEY || localStorage.getItem('supabaseKey') || ''
+    // Prefer user-saved credentials so firmware/dashboard can be pointed to the same Supabase project.
+    url: localStorage.getItem('supabaseUrl') || window.__ENV__?.SUPABASE_URL || '',
+    key: localStorage.getItem('supabaseKey') || window.__ENV__?.SUPABASE_KEY || ''
 };
 
 const CONFIG = {
@@ -10,7 +11,8 @@ const CONFIG = {
     warningThreshold: 15,
     costPerLiter: 0.05,
     chartPointsLimit: 60, // Last 60 data points
-    maxReadingsFetch: 1440
+    maxReadingsFetch: 600,
+    fastPollMs: 1000
 };
 
 const API_ADAPTER_CONFIG = {
@@ -24,6 +26,8 @@ let supabaseClient = null;
 let isConfigured = false;
 let readingsSubscription = null;
 let alertsSubscription = null;
+let realtimeConnected = false;
+let fastPollingTimer = null;
 let isDarkMode = false;
 let latestReadingSnapshot = null;
 let localAdapterState = {
@@ -1028,6 +1032,82 @@ function startMonitoring() {
     fetchLatestData();
     // Subscribe to realtime updates
     subscribeToRealtimeUpdates();
+    // Keep a low-latency fallback path if realtime channel is delayed/unavailable.
+    startFastPollingFallback();
+}
+
+function startFastPollingFallback() {
+    if (fastPollingTimer) return;
+
+    fastPollingTimer = window.setInterval(async () => {
+        if (realtimeConnected) return;
+        await fetchLatestReadingOnly();
+    }, CONFIG.fastPollMs);
+}
+
+async function fetchLatestReadingOnly() {
+    if (!isConfigured || !supabaseClient) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('water_readings')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(1);
+
+        if (error) {
+            console.warn('Fast polling read failed:', error.message);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            const latest = normalizeReading(data[0]);
+            if (!latest) return;
+
+            const current = dataStore.readings[dataStore.readings.length - 1];
+            if (!current || current.timestamp !== latest.timestamp) {
+                applyIncomingReading(latest);
+            }
+        }
+    } catch (error) {
+        console.warn('Fast polling exception:', error);
+    }
+}
+
+function normalizeReading(reading) {
+    if (!reading || typeof reading !== 'object') return null;
+
+    const toNumber = (value, fallback = 0) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    return {
+        ...reading,
+        flow_rate_1: toNumber(reading.flow_rate_1, 0),
+        flow_rate_2: toNumber(reading.flow_rate_2, 0),
+        percentage_loss: toNumber(reading.percentage_loss, 0),
+        water_level: toNumber(reading.water_level, 0),
+        humidity: toNumber(reading.humidity, 0),
+        valve_state: toNumber(reading.valve_state, 0),
+        system_online: toNumber(reading.system_online, 0),
+        daily_total_liters: toNumber(reading.daily_total_liters, 0)
+    };
+}
+
+function applyIncomingReading(reading) {
+    const normalized = normalizeReading(reading);
+    if (!normalized) return;
+
+    dataStore.readings.push(normalized);
+    if (dataStore.readings.length > CONFIG.maxReadingsFetch) {
+        dataStore.readings = dataStore.readings.slice(-CONFIG.maxReadingsFetch);
+    }
+
+    updateSystemStatus(true);
+    updateDashboard(normalized);
+    updateCharts();
+    updateLastUpdate();
 }
 
 function subscribeToRealtimeUpdates() {
@@ -1044,10 +1124,19 @@ function subscribeToRealtimeUpdates() {
                 { event: '*', schema: 'public', table: 'water_readings' },
                 payload => {
                     console.log('Realtime reading update:', payload);
-                    fetchLatestData();
+                    if (payload?.eventType === 'INSERT' || payload?.eventType === 'UPDATE') {
+                        applyIncomingReading(payload.new);
+                    } else {
+                        fetchLatestData();
+                    }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                realtimeConnected = (status === 'SUBSCRIBED');
+                if (status === 'SUBSCRIBED') {
+                    console.log('Realtime readings channel subscribed');
+                }
+            });
 
         // Subscribe to alerts changes using new Supabase v2+ API
         alertsSubscription = supabaseClient
@@ -1065,7 +1154,8 @@ function subscribeToRealtimeUpdates() {
     } catch (error) {
         console.error('Error setting up realtime subscriptions:', error);
         // Fallback to polling if realtime fails
-        setInterval(fetchLatestData, 5000);
+        realtimeConnected = false;
+        setInterval(fetchLatestReadingOnly, CONFIG.fastPollMs);
     }
 }
 
@@ -1093,10 +1183,11 @@ async function fetchLatestData() {
 
         console.log('Readings fetched:', readings?.length || 0, 'records');
         if (readings && readings.length > 0) {
-            dataStore.readings = readings.reverse(); // Chronological order
+            dataStore.readings = readings.map(normalizeReading).filter(Boolean).reverse(); // Chronological order
             updateSystemStatus(true);
-            console.log('Latest reading:', readings[readings.length - 1]);
-            updateDashboard(readings[readings.length - 1]); // Latest reading
+            const latestReading = dataStore.readings[dataStore.readings.length - 1];
+            console.log('Latest reading:', latestReading);
+            updateDashboard(latestReading); // Latest reading
         } else {
             console.warn('No readings found in water_readings table');
         }
@@ -1136,48 +1227,51 @@ async function fetchLatestData() {
 
 // ============== DASHBOARD UPDATES ==============
 function updateDashboard(latestReading) {
-    latestReadingSnapshot = latestReading;
+    const safeReading = normalizeReading(latestReading);
+    if (!safeReading) return;
+
+    latestReadingSnapshot = safeReading;
 
     // Update tank level
-    const waterLevel = latestReading.water_level || 0;
+    const waterLevel = safeReading.water_level || 0;
     updateTankLevel(waterLevel);
 
     // Update flow rates
-    document.getElementById('flow1').textContent = (latestReading.flow_rate_1 || 0).toFixed(2) + ' L/min';
-    document.getElementById('flow2').textContent = (latestReading.flow_rate_2 || 0).toFixed(2) + ' L/min';
+    document.getElementById('flow1').textContent = (safeReading.flow_rate_1 || 0).toFixed(2) + ' L/min';
+    document.getElementById('flow2').textContent = (safeReading.flow_rate_2 || 0).toFixed(2) + ' L/min';
 
     // Update progress bars
-    const maxFlow = Math.max(latestReading.flow_rate_1 || 0, latestReading.flow_rate_2 || 0, 5);
-    document.getElementById('progressFlow1').style.width = ((latestReading.flow_rate_1 || 0) / maxFlow * 100) + '%';
-    document.getElementById('progressFlow2').style.width = ((latestReading.flow_rate_2 || 0) / maxFlow * 100) + '%';
+    const maxFlow = Math.max(safeReading.flow_rate_1 || 0, safeReading.flow_rate_2 || 0, 5);
+    document.getElementById('progressFlow1').style.width = ((safeReading.flow_rate_1 || 0) / maxFlow * 100) + '%';
+    document.getElementById('progressFlow2').style.width = ((safeReading.flow_rate_2 || 0) / maxFlow * 100) + '%';
 
     // Update leak detection
-    const percentageLoss = latestReading.percentage_loss || 0;
-    updateLeakDetection(percentageLoss, latestReading.leak_status);
+    const percentageLoss = safeReading.percentage_loss || 0;
+    updateLeakDetection(percentageLoss, safeReading.leak_status);
 
     // Update system controls
-    const valveState = latestReading.valve_state === 1 ? 'OPEN' : 'CLOSED';
+    const valveState = safeReading.valve_state === 1 ? 'OPEN' : 'CLOSED';
     
     const valveIndicator = document.getElementById('valveIndicator');
-    valveIndicator.classList.toggle('active', latestReading.valve_state === 1);
+    valveIndicator.classList.toggle('active', safeReading.valve_state === 1);
     document.getElementById('valveState').textContent = valveState;
 
     // Update anomaly status
     const anomalyStatusElement = document.getElementById('anomalyStatus');
     if (anomalyStatusElement) {
-        anomalyStatusElement.textContent = latestReading.anomaly_status || 'Learning';
+        anomalyStatusElement.textContent = safeReading.anomaly_status || 'Learning';
     }
 
     // Update humidity panel
-    updateHumidityDisplay(latestReading);
+    updateHumidityDisplay(safeReading);
 
     // Update statistics
-    const dailyTotal = (latestReading.daily_total_liters || 0).toFixed(2);
+    const dailyTotal = (safeReading.daily_total_liters || 0).toFixed(2);
     document.getElementById('dailyTotal').textContent = dailyTotal + ' L';
 
     // Calculate estimated loss
-    const volume1 = latestReading.flow_rate_1 || 0;
-    const volume2 = latestReading.flow_rate_2 || 0;
+    const volume1 = safeReading.flow_rate_1 || 0;
+    const volume2 = safeReading.flow_rate_2 || 0;
     const estimatedLoss = (volume1 - volume2).toFixed(2);
     const minimumLoss = Math.max(0, estimatedLoss);
     document.getElementById('estimatedLoss').textContent = minimumLoss + ' L';
@@ -1187,10 +1281,10 @@ function updateDashboard(latestReading) {
     document.getElementById('estimatedCost').textContent = '$' + cost;
 
     // Update sustainability impact section
-    updateSustainabilityPanel(latestReading);
+    updateSustainabilityPanel(safeReading);
 
     // Update AquaMind-inspired intelligence section
-    updateIntelligenceStudio(latestReading);
+    updateIntelligenceStudio(safeReading);
 
     // Update export stats
     updateExportStats();

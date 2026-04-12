@@ -63,12 +63,12 @@
 #define PIPE_DIAMETER_MM 19.05
 
 // ============== WiFi & SUPABASE CONFIGURATION ==============
-const char *SSID = "******";
-const char *PASSWORD = "********";
+const char *SSID = "PSP";
+const char *PASSWORD = "12345678";
 
 // Supabase configuration
-const char *SUPABASE_URL = "*****************";
-const char *SUPABASE_KEY = "************************************************************";
+const char *SUPABASE_URL = "https://vivmgepwqsvtlrmxgdvz.supabase.co";
+const char *SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpdm1nZXB3cXN2dGxybXhnZHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mjg5NjEsImV4cCI6MjA5MTQwNDk2MX0.DHErVhk-dppDZtWZqoDGFpeLPPfY8-3ZVrgf9baQU6s";
 const char *SUPABASE_TABLE = "water_readings";
 const char *ALERT_TABLE = "alerts";
 
@@ -81,6 +81,7 @@ const float TANK_HEIGHT_CM = 100.0;        // Tank height in cm
 // ============== NOISE FILTERING ==============
 const unsigned int FLOW_SENSOR_NOISE_THRESHOLD = 1; // Minimum pulses per second to register as flow (1 pulse = 0.133 L/min)
 const float FLOW_RATE_MIN_THRESHOLD = 0.05;         // Minimum L/min to consider as actual flow (very sensitive)
+const unsigned long FLOW_PULSE_DEBOUNCE_US = 500;   // Ignore implausibly fast edges (contact/noise bounce)
 
 // ============== HUMIDITY MONITORING ==============
 const float HUMIDITY_MIN_VALID = 0.0;
@@ -122,6 +123,10 @@ struct BaselineData
 bool baseline_initialized = false;
 int baseline_days_collected = 0;
 const int BASELINE_DAYS_REQUIRED = 3; // Collect 3 days of baseline before activation
+bool rtc_available = false;
+
+volatile unsigned long last_pulse1_us = 0;
+volatile unsigned long last_pulse2_us = 0;
 
 // Global variables for monitoring
 struct SystemState
@@ -171,15 +176,68 @@ const unsigned long BUZZER_PAUSE_CYCLE = 1000; // 1000ms pause before repeating 
 // Manual control flag
 bool manual_valve_override = false;
 
+// ============== HELPER FUNCTIONS ==============
+bool is_valid_rtc_datetime(const DateTime &dt)
+{
+  return (dt.year() >= 2020 && dt.year() <= 2100 &&
+          dt.month() >= 1 && dt.month() <= 12 &&
+          dt.day() >= 1 && dt.day() <= 31 &&
+          dt.hour() <= 23 && dt.minute() <= 59 && dt.second() <= 59);
+}
+
+float clamp_percentage(float value)
+{
+  if (!isfinite(value))
+    return 0.0;
+  if (value < 0.0)
+    return 0.0;
+  if (value > 100.0)
+    return 100.0;
+  return value;
+}
+
+String normalize_leak_status(const String &status)
+{
+  if (status == "Normal" || status == "Warning" || status == "Critical")
+    return status;
+  return "Normal";
+}
+
+uint8_t get_safe_current_hour()
+{
+  if (rtc_available)
+  {
+    DateTime now = rtc.now();
+    if (is_valid_rtc_datetime(now))
+    {
+      return now.hour();
+    }
+    Serial.println("[RTC] Invalid datetime while reading hour, using millis fallback");
+  }
+
+  // Fallback if RTC is unavailable/invalid
+  return (millis() / 3600000UL) % 24;
+}
+
 // ============== INTERRUPT HANDLERS ==============
 void IRAM_ATTR flow_sensor_1_interrupt()
 {
-  pulse1_count++;
+  unsigned long now_us = micros();
+  if ((now_us - last_pulse1_us) >= FLOW_PULSE_DEBOUNCE_US)
+  {
+    pulse1_count++;
+    last_pulse1_us = now_us;
+  }
 }
 
 void IRAM_ATTR flow_sensor_2_interrupt()
 {
-  pulse2_count++;
+  unsigned long now_us = micros();
+  if ((now_us - last_pulse2_us) >= FLOW_PULSE_DEBOUNCE_US)
+  {
+    pulse2_count++;
+    last_pulse2_us = now_us;
+  }
 }
 
 // ============== SETUP ==============
@@ -202,6 +260,13 @@ void setup()
   system_state.valve_state = 0;
   system_state.daily_total_ml = 0;
   system_state.humidity_percent = 0;
+  system_state.leak_status = "Normal";
+  system_state.anomaly_status = "Learning";
+  system_state.percentage_loss = 0;
+  system_state.current_flow_rate_1 = 0;
+  system_state.current_flow_rate_2 = 0;
+  system_state.water_level_cm = 0;
+  system_state.system_online = 0;
   system_state.nighttime_flow_active = false;
   system_state.nighttime_accumulated_volume_liters = 0;
   system_state.nighttime_leak_status = "Normal";
@@ -221,11 +286,13 @@ void setup()
   // Initialize RTC
   if (!rtc.begin())
   {
+    rtc_available = false;
     Serial.println("ERROR: RTC not found!");
     Serial.println("WARNING: Timestamps will be incorrect. RTC module may be disconnected.");
   }
   else
   {
+    rtc_available = true;
     Serial.println("RTC initialized successfully");
 
     // Check if RTC needs time adjustment (lost power or first time)
@@ -287,7 +354,7 @@ void setup()
   Serial.print(FLOW_SENSOR_NOISE_THRESHOLD / FLOW_SENSOR_CALIBRATION, 2);
   Serial.println(" L/min)");
   Serial.println("System ready. Logging sensor data every 1 second...");
-  Serial.println("Uploading to Supabase every 10 seconds...");
+  Serial.println("Uploading to Supabase every 1 second...");
   Serial.println("=========================\n");
 }
 
@@ -319,6 +386,7 @@ void loop()
       if (system_state.current_flow_rate_1 > 0.5)
       { // Only check if there's significant flow
         immediate_loss_percentage = ((system_state.current_flow_rate_1 - system_state.current_flow_rate_2) / system_state.current_flow_rate_1) * 100.0;
+        immediate_loss_percentage = clamp_percentage(immediate_loss_percentage);
 
         // Update system_state.percentage_loss with real-time value (every second)
         system_state.percentage_loss = immediate_loss_percentage;
@@ -356,8 +424,8 @@ void loop()
       last_window_time = current_time;
     }
 
-    // Upload data to Supabase every 10 seconds
-    if (current_time - system_state.last_upload_time >= 2000)
+    // Upload data to Supabase every 1 second
+    if (current_time - system_state.last_upload_time >= 1000)
     {
       send_data_to_supabase();
       system_state.last_upload_time = current_time;
@@ -614,8 +682,7 @@ void process_detection_logic()
   }
 
   // Check for anomalies based on time-based pattern
-  DateTime now = rtc.now();
-  uint8_t current_hour = now.hour();
+  uint8_t current_hour = get_safe_current_hour();
 
   check_anomaly_detection(current_hour, accumulated_volume_1);
 
@@ -984,7 +1051,7 @@ void connect_wifi()
       Serial.println("  1. ESP32 on different WiFi than your PC");
       Serial.println("  2. WiFi network blocks this device");
       Serial.println("  3. DNS not working properly");
-      return;
+      Serial.println("[CONNECTIVITY TEST] Continuing anyway - Supabase HTTPS may still work");
     }
 
     // Now test Supabase connectivity
@@ -1071,21 +1138,35 @@ void send_data_to_supabase()
   // Create JSON payload with structure matching Supabase table
   StaticJsonDocument<256> doc;
 
-  DateTime now = rtc.now();
-
   char timestamp[25];
-  sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d",
-          now.year(), now.month(), now.day(),
-          now.hour(), now.minute(), now.second());
+  bool has_valid_timestamp = false;
+  if (rtc_available)
+  {
+    DateTime now = rtc.now();
+    if (is_valid_rtc_datetime(now))
+    {
+      snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+               now.year(), now.month(), now.day(),
+               now.hour(), now.minute(), now.second());
+      has_valid_timestamp = true;
+    }
+    else
+    {
+      Serial.println("[RTC] Invalid datetime detected, letting Supabase set server timestamp");
+    }
+  }
 
   // Build JSON object with exact field names (only fields that exist in water_readings table)
   float safe_flow_1 = isfinite(system_state.current_flow_rate_1) ? system_state.current_flow_rate_1 : 0.0;
   float safe_flow_2 = isfinite(system_state.current_flow_rate_2) ? system_state.current_flow_rate_2 : 0.0;
-  float safe_loss = isfinite(system_state.percentage_loss) ? system_state.percentage_loss : 0.0;
+  float safe_loss = clamp_percentage(system_state.percentage_loss);
   float safe_level = isfinite(system_state.water_level_cm) ? system_state.water_level_cm : 0.0;
   float safe_humidity = isfinite(system_state.humidity_percent) ? system_state.humidity_percent : 0.0;
 
-  doc["timestamp"] = timestamp;
+  if (has_valid_timestamp)
+  {
+    doc["timestamp"] = timestamp;
+  }
   doc["flow_rate_1"] = round(safe_flow_1 * 100.0) / 100.0;
   doc["flow_rate_2"] = round(safe_flow_2 * 100.0) / 100.0;
   // percentage_loss is already 0-100, just send directly (don't multiply by 100 again)
@@ -1093,7 +1174,7 @@ void send_data_to_supabase()
   doc["water_level"] = round(safe_level * 100.0) / 100.0;
   doc["humidity"] = round(safe_humidity * 100.0) / 100.0;
   doc["valve_state"] = system_state.valve_state;
-  doc["leak_status"] = system_state.leak_status;
+  doc["leak_status"] = normalize_leak_status(system_state.leak_status);
   doc["anomaly_status"] = system_state.anomaly_status;
   doc["system_online"] = system_state.system_online;
   doc["daily_total_liters"] = system_state.daily_total_ml / 1000.0;
@@ -1105,8 +1186,15 @@ void send_data_to_supabase()
   String jsonPayload;
   serializeJson(doc, jsonPayload);
 
-  Serial.print("[SUPABASE] Timestamp: ");
-  Serial.println(timestamp);
+  if (has_valid_timestamp)
+  {
+    Serial.print("[SUPABASE] Timestamp: ");
+    Serial.println(timestamp);
+  }
+  else
+  {
+    Serial.println("[SUPABASE] Timestamp: <server default>");
+  }
   Serial.print("[SUPABASE] Payload size: ");
   Serial.print(jsonPayload.length());
   Serial.println(" bytes");
@@ -1202,14 +1290,18 @@ void log_alert(String alert_type, String message)
 
   StaticJsonDocument<256> doc;
 
-  DateTime now = rtc.now();
-
-  char timestamp[25];
-  sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d",
-          now.year(), now.month(), now.day(),
-          now.hour(), now.minute(), now.second());
-
-  doc["timestamp"] = timestamp;
+  if (rtc_available)
+  {
+    DateTime now = rtc.now();
+    if (is_valid_rtc_datetime(now))
+    {
+      char timestamp[25];
+      snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+               now.year(), now.month(), now.day(),
+               now.hour(), now.minute(), now.second());
+      doc["timestamp"] = timestamp;
+    }
+  }
   doc["alert_type"] = alert_type;
   doc["message"] = message;
   doc["severity"] = (alert_type == "CRITICAL_LEAK") ? "high" : "medium";

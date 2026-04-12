@@ -48,6 +48,12 @@
                         <input type="checkbox" id="mobileCriticalOnly">
                         <span>Critical-only mobile</span>
                     </label>
+                    <label class="demo-pass-toggle" for="judgesDemoOnePass">
+                        <input type="checkbox" id="judgesDemoOnePass">
+                        <span>One-pass</span>
+                    </label>
+                    <button id="judgesDemoToggle" class="demo-toggle">▶ Judges Demo Mode</button>
+                    <div class="last-update" id="judgesDemoStatus">Demo: Manual</div>
                     <button id="themeToggle" class="theme-toggle">🌙 Dark</button>
                     <div class="last-update" id="lastUpdate">Last Update: --</div>
                 </div>
@@ -66,6 +72,71 @@
             <div class="pulse-item">
                 <span class="pulse-label">Window</span>
                 <span class="pulse-value">2 AM - 5 AM leak watch active</span>
+            </div>
+        </section>
+
+        <section class="card sustainability-lab-section">
+            <div class="sustainability-head">
+                <div>
+                    <p class="sustainability-kicker">Competition Upgrade</p>
+                    <h2>🌍 Sustainability Impact Lab</h2>
+                    <p>Built to solve real-world water waste with measurable outcomes, technical proof, and a clear demo storyline.</p>
+                </div>
+                <div class="sustainability-readiness" id="impactReadiness">Readiness: Gathering baseline data</div>
+            </div>
+
+            <div class="sustainability-kpis">
+                <article class="sustainability-kpi">
+                    <span class="kpi-label">Leak Reduction Opportunity</span>
+                    <span class="kpi-value" id="impactOpportunityLiters">0.0 L/day</span>
+                    <span class="kpi-note">Estimated preventable loss based on live imbalance trend.</span>
+                </article>
+                <article class="sustainability-kpi">
+                    <span class="kpi-label">Projected Monthly Water Savings</span>
+                    <span class="kpi-value" id="impactMonthlySavings">0.0 L/month</span>
+                    <span class="kpi-note">30-day projection if current leak behavior is corrected.</span>
+                </article>
+                <article class="sustainability-kpi">
+                    <span class="kpi-label">Estimated CO2e Avoided</span>
+                    <span class="kpi-value" id="impactCo2Saved">0.00 kg/month</span>
+                    <span class="kpi-note">Uses a water treatment + pumping intensity factor.</span>
+                </article>
+                <article class="sustainability-kpi">
+                    <span class="kpi-label">People-Level Water Equivalent</span>
+                    <span class="kpi-value" id="impactPeopleSupported">0.0 people/day</span>
+                    <span class="kpi-note">Based on 50 L/day per person basic water access benchmark.</span>
+                </article>
+            </div>
+
+            <div class="sustainability-grid">
+                <article class="criterion-card" id="demoProblemCard">
+                    <h3>Problem Understanding <span>15 pts</span></h3>
+                    <p>Tracks leak percentage, anomaly state, and critical windows to show the exact water-loss problem in context.</p>
+                </article>
+                <article class="criterion-card" id="demoInnovationCard">
+                    <h3>Innovation <span>20 pts</span></h3>
+                    <p>Dual flow verification + anomaly learning + automatic valve response combines prevention and intelligence.</p>
+                </article>
+                <article class="criterion-card" id="demoTechCard">
+                    <h3>Technical Implementation <span>20 pts</span></h3>
+                    <p id="criterionTechStatus">Live sensor stream, Supabase ingestion, and real-time dashboard evidence are active.</p>
+                </article>
+                <article class="criterion-card" id="demoImpactCard">
+                    <h3>Sustainability Impact <span>15 pts</span></h3>
+                    <p id="criterionImpactStatus">Impact metrics update from real readings to quantify water and emissions benefits.</p>
+                </article>
+                <article class="criterion-card" id="demoFeasibilityCard">
+                    <h3>Feasibility & Scalability <span>15 pts</span></h3>
+                    <p id="criterionFeasibilityStatus">Built with low-cost sensors, cloud storage, and repeatable deployment for city-scale rollout.</p>
+                </article>
+                <article class="criterion-card" id="demoPresentationCard">
+                    <h3>Presentation & Demo <span>10 pts</span></h3>
+                    <p>Use this flow: problem signal, intervention, quantified impact, then pilot scaling path.</p>
+                </article>
+                <article class="criterion-card" id="demoUxCard">
+                    <h3>UI/UX</h3>
+                    <p>High-contrast status cards, visual tanks, and chart timeframes improve comprehension in under one minute.</p>
+                </article>
             </div>
         </section>
 

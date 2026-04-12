@@ -181,6 +181,7 @@ body {
 }
 
 .status-badge,
+.demo-toggle,
 .theme-toggle,
 .last-update {
     border-radius: 999px;
@@ -191,6 +192,22 @@ body {
     font-weight: 600;
     font-size: 0.83rem;
     color: #f6fbfd;
+}
+
+.demo-toggle {
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.demo-toggle:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.demo-toggle.active {
+    background: linear-gradient(120deg, rgba(18, 161, 80, 0.92), rgba(16, 193, 106, 0.92));
+    border-color: rgba(255, 255, 255, 0.48);
+    color: #ffffff;
 }
 
 .critical-mobile-toggle {
@@ -206,6 +223,29 @@ body {
     align-items: center;
     gap: 0.4rem;
     cursor: pointer;
+}
+
+.demo-pass-toggle {
+    border-radius: 999px;
+    padding: 0.46rem 0.82rem;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(5px);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #f6fbfd;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+}
+
+.demo-pass-toggle input {
+    accent-color: #12a150;
+}
+
+.demo-pass-toggle span {
+    white-space: nowrap;
 }
 
 .critical-mobile-toggle input {
@@ -272,6 +312,131 @@ body {
 .pulse-value {
     font-weight: 700;
     font-size: 0.92rem;
+}
+
+.sustainability-lab-section {
+    margin-bottom: 1rem;
+    border-color: rgba(7, 75, 89, 0.24);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(240, 251, 246, 0.78)),
+        radial-gradient(circle at 95% 0%, rgba(16, 161, 116, 0.15), transparent 35%);
+}
+
+.sustainability-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-bottom: 0.8rem;
+}
+
+.sustainability-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: #0f6f57;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.sustainability-head h2 {
+    margin-bottom: 0.35rem;
+}
+
+.sustainability-head p {
+    color: var(--muted);
+    max-width: 72ch;
+    font-size: 0.9rem;
+}
+
+.sustainability-readiness {
+    background: rgba(11, 106, 125, 0.1);
+    border: 1px solid rgba(11, 106, 125, 0.24);
+    color: #0b4f5f;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.sustainability-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sustainability-kpi {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(16, 34, 46, 0.12);
+    background: rgba(255, 255, 255, 0.86);
+    padding: 0.78rem;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.kpi-label {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.kpi-value {
+    font-family: 'Chakra Petch', sans-serif;
+    color: #0e6c7f;
+    font-size: 1.26rem;
+    font-weight: 700;
+    line-height: 1.05;
+}
+
+.kpi-note {
+    font-size: 0.74rem;
+    color: var(--muted);
+}
+
+.sustainability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.68rem;
+}
+
+.criterion-card {
+    border: 1px solid rgba(16, 34, 46, 0.12);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.78);
+    padding: 0.72rem;
+    display: grid;
+    gap: 0.42rem;
+}
+
+.criterion-card h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    color: #0f3440;
+    font-size: 0.9rem;
+}
+
+.criterion-card h3 span {
+    font-size: 0.74rem;
+    color: #0f6f57;
+    letter-spacing: 0.02em;
+}
+
+.criterion-card p {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.criterion-card.demo-focus {
+    border-color: rgba(16, 161, 116, 0.65);
+    box-shadow: 0 0 0 3px rgba(16, 161, 116, 0.15), 0 16px 24px rgba(8, 71, 54, 0.18);
+    transform: translateY(-2px);
 }
 
 .dashboard-grid {
@@ -1205,6 +1370,11 @@ body.dark-mode .critical-mobile-toggle {
     background: rgba(255, 255, 255, 0.11);
 }
 
+body.dark-mode .demo-pass-toggle {
+    color: #edf7fb;
+    background: rgba(255, 255, 255, 0.11);
+}
+
 body.dark-mode .pulse-item,
 body.dark-mode .chart-container,
 body.dark-mode .footer,
@@ -1274,6 +1444,46 @@ body.dark-mode .stat-value {
     color: #74d6eb;
 }
 
+body.dark-mode .sustainability-lab-section {
+    background:
+        linear-gradient(145deg, rgba(10, 29, 39, 0.85), rgba(8, 34, 33, 0.78)),
+        radial-gradient(circle at 95% 0%, rgba(36, 175, 125, 0.2), transparent 35%);
+}
+
+body.dark-mode .sustainability-kicker {
+    color: #7bf4ca;
+}
+
+body.dark-mode .sustainability-readiness,
+body.dark-mode .sustainability-kpi,
+body.dark-mode .criterion-card {
+    background: rgba(9, 30, 41, 0.82);
+    border-color: rgba(108, 148, 167, 0.28);
+}
+
+body.dark-mode .demo-toggle.active {
+    background: linear-gradient(120deg, rgba(28, 145, 102, 0.95), rgba(42, 179, 122, 0.95));
+    border-color: rgba(149, 240, 207, 0.45);
+}
+
+body.dark-mode .criterion-card.demo-focus {
+    border-color: rgba(132, 242, 197, 0.58);
+    box-shadow: 0 0 0 3px rgba(132, 242, 197, 0.14), 0 16px 24px rgba(0, 0, 0, 0.34);
+}
+
+body.dark-mode .sustainability-readiness {
+    color: #a7e9fb;
+}
+
+body.dark-mode .kpi-value,
+body.dark-mode .criterion-card h3 {
+    color: #8ce2f8;
+}
+
+body.dark-mode .criterion-card h3 span {
+    color: #84f2c5;
+}
+
 @media (max-width: 1200px) {
     .monitoring-row,
     .bottom-row {
@@ -1282,6 +1492,10 @@ body.dark-mode .stat-value {
 
     .pulse-strip {
         grid-template-columns: 1fr;
+    }
+
+    .sustainability-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -1302,6 +1516,19 @@ body.dark-mode .stat-value {
     .header-status {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .sustainability-head {
+        flex-direction: column;
+    }
+
+    .sustainability-readiness {
+        white-space: normal;
+    }
+
+    .sustainability-kpis,
+    .sustainability-grid {
+        grid-template-columns: 1fr;
     }
 
     .critical-mobile-toggle {
@@ -1366,6 +1593,7 @@ body.dark-mode .stat-value {
     }
 
     body.mobile-critical-mode .pulse-strip,
+    body.mobile-critical-mode .sustainability-lab-section,
     body.mobile-critical-mode .tank-section,
     body.mobile-critical-mode .flow-section,
     body.mobile-critical-mode .humidity-section,

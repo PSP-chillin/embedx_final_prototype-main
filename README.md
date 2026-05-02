@@ -1,5 +1,9 @@
 # FlowState
 
+## Author and Maintainer
+
+[Darshanpawar7](https://github.com/Darshanpawar7)
+
 FlowState is a real-time water monitoring and leak detection system built with an ESP32 firmware layer, a Supabase backend, and a responsive browser dashboard. It tracks flow, tank level, humidity, and leak risk, then surfaces the data in a live operations view designed for demos, pilots, and production prototypes.
 
 Live demo: [https://sustainflow.netlify.app/](https://sustainflow.netlify.app/)

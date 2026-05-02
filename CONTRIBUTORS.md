@@ -8,6 +8,7 @@ This project is built and maintained by a community of developers. Thank you to 
 
 ### Project Creator & Maintainer
 - **Primary Developer** - Architecture, ESP32 firmware, dashboard design
+- GitHub: [@Darshanpawar7](https://github.com/Darshanpawar7)
 
 ---
 

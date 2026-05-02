@@ -287,12 +287,6 @@ Open the Serial Monitor at 115200 baud and send one command per line:
 - Keep RLS enabled on the database tables
 - Treat water-usage telemetry as potentially sensitive operational data
 
-## Suggested Next Steps
-
-1. Add screenshots of the dashboard in the feature sections.
-2. Add a wiring diagram image if you have one.
-3. Add a short deployment note for the exact Netlify or hosting workflow you use.
-
 ## License
 
 See [LICENSE](LICENSE) for the project license.

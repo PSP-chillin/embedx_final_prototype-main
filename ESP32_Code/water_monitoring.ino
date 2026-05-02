@@ -63,12 +63,13 @@
 #define PIPE_DIAMETER_MM 19.05
 
 // ============== WiFi & SUPABASE CONFIGURATION ==============
-const char *SSID = "PSP";
-const char *PASSWORD = "12345678";
+const char *SSID = "YOUR_WIFI_SSID";
+const char *PASSWORD = "YOUR_WIFI_PASSWORD";
 
 // Supabase configuration
-const char *SUPABASE_URL = "https://vivmgepwqsvtlrmxgdvz.supabase.co";
-const char *SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpdm1nZXB3cXN2dGxybXhnZHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mjg5NjEsImV4cCI6MjA5MTQwNDk2MX0.DHErVhk-dppDZtWZqoDGFpeLPPfY8-3ZVrgf9baQU6s";
+
+const char *SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const char *SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
 const char *SUPABASE_TABLE = "water_readings";
 const char *ALERT_TABLE = "alerts";
 
